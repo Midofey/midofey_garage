@@ -4,7 +4,7 @@ lib.versionCheck('gabovrs/midofey_garage')
 
 lib.callback.register('midofey_garage:checkOwner', function(source, plate)
     local plate = string.gsub(plate, ' ', '')
-    local result = CustomSQL('query', 'SELECT owner FROM owned_vehicles WHERE REPLACE(plate, " ", "") = ?', {plate})
+    local result = CustomSQL('query', "SELECT owner FROM owned_vehicles WHERE REPLACE(plate, ' ','') = ?", {plate})
     if #result > 0 then
         return result[1].owner
     end
@@ -15,10 +15,10 @@ lib.callback.register('midofey_garage:getVehicles', function(source, job, type)
     local identifier = xPlayer.getIdentifier()
     local result
     if job then
-        result = CustomSQL('query', 'SELECT * FROM owned_vehicles WHERE owner = ? and job = ? and type = ? ORDER BY stored DESC',
+        result = CustomSQL('query', 'SELECT * FROM owned_vehicles WHERE owner = ? and job = ? and type = ? ORDER BY `stored` DESC',
             {identifier, job, type})
     else
-        result = CustomSQL('query', 'SELECT * FROM owned_vehicles WHERE owner = ? and type = ? ORDER BY stored DESC', {identifier, type})
+        result = CustomSQL('query', 'SELECT * FROM owned_vehicles WHERE owner = ? and type = ? ORDER BY `stored` DESC', {identifier, type})
     end
     return result
 end)
@@ -28,6 +28,20 @@ lib.callback.register('midofey_garage:getImpoundedVehicles', function(source, ty
     local identifier = xPlayer.getIdentifier()
     local result = CustomSQL('query', 'SELECT * FROM owned_vehicles WHERE owner = ? and impound = 1 and type = ?', {identifier, type})
     return result
+end)
+
+lib.callback.register('midofey_garage:spawnVehicle', function(source, vehicleData, plate, coords)
+    local vehicleId = nil
+    ESX.OneSync.SpawnVehicle(vehicleData.model, vector3(coords), coords.w, vehicleData, function(NetworkId)
+        Wait(500)
+        local Vehicle = NetworkGetEntityFromNetworkId(NetworkId)
+        -- NetworkId is sent over, since then it can also be sent to a client for them to use, vehicle handles cannot.
+        local Exists = DoesEntityExist(Vehicle)
+        print(Exists and 'Successfully Spawned Vehicle!' or 'Failed to Spawn Vehicle!')
+        vehicleId = NetworkId
+    end)
+    while vehicleId == nil do Wait(100) end
+    return vehicleId
 end)
 
 lib.callback.register('midofey_garage:canPay', function(source, amount)
@@ -45,7 +59,7 @@ lib.callback.register('midofey_garage:getVehicle', function(source, plate)
     local plate = string.gsub(plate, ' ', '')
     local xPlayer = ESX.GetPlayerFromId(source)
     local identifier = xPlayer.getIdentifier()
-    local result = CustomSQL('query', 'SELECT * FROM owned_vehicles WHERE REPLACE(plate, " ", "") = ? and owner = ?', {plate, identifier})
+    local result = CustomSQL('query', "SELECT * FROM owned_vehicles WHERE REPLACE(plate, ' ','') = ? and owner = ?", {plate, identifier})
     return result[1]
 end)
 
@@ -53,7 +67,7 @@ RegisterServerEvent('midofey_garage:updateVehicle', function(plate, vehicle, par
     local plate = string.gsub(plate, ' ', '')
     local xPlayer = ESX.GetPlayerFromId(source)
     local identifier = xPlayer.getIdentifier()
-    CustomSQL('update', 'UPDATE owned_vehicles SET vehicle = ?, parking = ?, stored = ? WHERE REPLACE(plate, " ", "") = ? and owner = ?',
+    CustomSQL('update', "UPDATE owned_vehicles SET vehicle = ?, parking = ?, `stored` = ? WHERE REPLACE(plate, ' ','') = ? and owner = ?",
         {vehicle, parking, stored, plate, identifier})
 end)
 
@@ -70,7 +84,7 @@ RegisterServerEvent('midofey_garage:setVehicleOut', function(plate, stored)
     local xPlayer = ESX.GetPlayerFromId(source)
     local identifier = xPlayer.getIdentifier()
     CustomSQL('update',
-        'UPDATE owned_vehicles SET stored = ?, parking = NULL, impound = NULL WHERE REPLACE(plate, " ", "") = ? and owner = ?',
+        "UPDATE owned_vehicles SET `stored` = ?, parking = NULL, impound = NULL WHERE REPLACE(plate, ' ','') = ? and owner = ?",
         {stored, plate, identifier})
 end)
 

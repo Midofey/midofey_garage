@@ -83,28 +83,27 @@ end
 
 function spawnVehicle(vehicleData, plate, coords)
     if not lib.getClosestVehicle(vector3(coords), 5.0, false) then
-        ESX.Game.SpawnVehicle(vehicleData.model, vector3(coords), coords.w, function(veh)
-            SetPedIntoVehicle(PlayerPedId(), veh, -1)
-            lib.setVehicleProperties(veh, vehicleData)
-            lib.notify({
-                description = locale('vehicle_out'),
-                type = 'success'
-            })
-            TriggerServerEvent('midofey_garage:setVehicleOut', plate, false)
-            if Config.FuelSystem == 'LegacyFuel' then
-                if vehicleData.fuelLevel then
-                    exports["LegacyFuel"]:SetFuel(veh, vehicleData.fuelLevel)
-                end
-            elseif Config.FuelSystem == 'ox_fuel' then
-                Entity(veh).state.fuel = vehicleData.fuelLevel
-            elseif Config.FuelSystem == 'custom' then
-                -- add your custom system export here
+        local vehicleId = lib.callback.await('midofey_garage:spawnVehicle', false, vehicleData, plate, coords)
+        local veh = NetworkGetEntityFromNetworkId(vehicleId)
+        SetPedIntoVehicle(PlayerPedId(), veh, -1)
+        lib.setVehicleProperties(veh, vehicleData)
+        lib.notify({
+            description = locale('vehicle_out'),
+            type = 'success'
+        })
+        if Config.FuelSystem == 'LegacyFuel' then
+            if vehicleData.fuelLevel then
+                exports["LegacyFuel"]:SetFuel(veh, vehicleData.fuelLevel)
             end
-            if Config.KeySystem == 'custom' then
-                Entity(veh).state.owner = GetPlayerServerId(PlayerId())
+        elseif Config.FuelSystem == 'ox_fuel' then
+            Entity(veh).state.fuel = vehicleData.fuelLevel
+        elseif Config.FuelSystem == 'custom' then
                 -- add your custom system export here
-            end
-        end)
+        end
+        if Config.KeySystem == 'custom' then
+            Entity(veh).state.owner = GetPlayerServerId(PlayerId())
+            -- add your custom system export here
+        end
     else
         lib.notify({
             description = locale('vehicles_in_zone'),
@@ -637,7 +636,6 @@ RegisterNetEvent('midofey_garage:recoverVehicle', function(args)
                     if canPay then
                         local vehicleData = json.decode(vehicle.vehicle)
                         spawnVehicle(vehicleData, vehicle.plate, Config.Impounds[args.zone.index].spawn)
-                        TriggerServerEvent('midofey_garage:setVehicleOut', vehicle.plate, false)
                     else
                         lib.notify({
                             description = locale('not_enought_money'),
