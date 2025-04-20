@@ -132,7 +132,7 @@ RegisterNetEvent('midofey_garage:impoundVehicle', function()
                     clip = 'fixing_a_ped'
                 }
             }) then
-                TriggerServerEvent('midofey_garage:setVehicleImpound', string.gsub(GetVehicleNumberPlateText(closestVehicle), "%s", ""), true)
+                TriggerServerEvent('midofey_garage:setVehicleImpound', string.gsub(GetVehicleNumberPlateText(closestVehicle), "%s", ""))
                 SetEntityAsMissionEntity(closestVehicle, true, true)
                 NetworkFadeOutEntity(closestVehicle, true, true)
                 Wait(1000)
@@ -157,7 +157,7 @@ RegisterNetEvent('midofey_garage:takeOutVehicle', function(args)
     ExitPreviewMode()
     lib.callback('midofey_garage:getVehicle', false, function(vehicle)
         if vehicle then
-            if vehicle.stored then
+            if vehicle.state == 'in_garage' then
                 local vehicleData = json.decode(vehicle.vehicle)
                 spawnVehicle(vehicleData, vehicle.plate, args.spawn)
             else
@@ -175,7 +175,7 @@ RegisterNetEvent('midofey_garage:takeOutVehicle', function(args)
 end)
 
 RegisterNetEvent('midofey_garage:sendVehicleImpound', function(targetPlate)
-    TriggerServerEvent('midofey_garage:setVehicleImpound', targetPlate, true)
+    TriggerServerEvent('midofey_garage:setVehicleImpound', targetPlate)
     lib.notify({
         description = locale('vehicle_sent_to_impounded'),
         type = 'info'
@@ -348,16 +348,16 @@ RegisterNetEvent('midofey_garage:access-garage', function(zone)
                     local description = locale('plate', v.plate)
                     local metadata = GetVehicleMetaData(vehicleData)
 
-                    if v.stored == 0 or v.stored == false then
+                    if v.state == 'out_garage' then
                         iconColor = 'rgb(250 204 21)' --Yellow
                     end
 
-                    if v.impound == 1 or v.impound == true then
+                    if v.state == 'in_impound' then
                         iconColor = 'rgb(190 18 60)' --Red
                         vehicleTitle = vehicleTitle .. ' ' .. locale('impounded')
                     end
 
-                    if v.parking ~= nil and v.parking ~= zone.index and (v.stored == 1 or v.stored == true) then
+                    if v.parking ~= nil and v.parking ~= zone.index and (v.state == 'in_garage') then
                         iconColor = 'rgb(96 165 250)'
                         description = description .. ', ' .. locale('parked_in') .. ' ' .. locale(v.parking)
                     end
@@ -367,13 +367,13 @@ RegisterNetEvent('midofey_garage:access-garage', function(zone)
                             title = vehicleTitle .. ' ' .. locale('job'),
                             icon = icon,
                             iconColor = iconColor,
-                            disabled = v.impound == 1 or v.impound == true,
+                            disabled = v.state == 'in_impound',
                             description = description,
                             metadata = metadata,
                             arrow = true,
                             onSelect = function()
                                 local options = {}
-                                if v.stored == 1 or v.stored == true then
+                                if v.state == 'in_garage' then
                                     if v.parking ~= nil and v.parking ~= zone.index then
                                         table.insert(options, {
                                             title = locale('transfer_vehicle'),
@@ -432,13 +432,13 @@ RegisterNetEvent('midofey_garage:access-garage', function(zone)
                                 title = vehicleTitle,
                                 icon = icon,
                                 iconColor = iconColor,
-                                disabled = v.impound == 1 or v.impound == true,
+                                disabled = v.state == 'in_impound',
                                 description = description,
                                 metadata = metadata,
                                 arrow = true,
                                 onSelect = function()
                                     local options = {}
-                                    if v.stored == 1 or v.stored == true then
+                                    if v.state == 'in_garage' then
                                         if v.parking ~= nil and v.parking ~= zone.index then
                                             table.insert(options, {
                                                 title = locale('transfer_vehicle', Config.TransferVehiclePrice[zone.type]),
@@ -583,12 +583,21 @@ RegisterNetEvent('midofey_garage:access-impound', function(zone)
                 local icon = 'car'
                 local metadata = GetVehicleMetaData(vehicleData)
 
+                if v.state == 'out_garage' then
+                    iconColor = 'rgb(250 204 21)' --Yellow
+                end
+
+                if v.state == 'in_garage' then
+                    iconColor = 'rgb(29 78 216)'
+                end
+
                 table.insert(options, {
                     title = vehicleTitle,
                     icon = icon,
                     iconColor = iconColor,
                     description = locale('plate', v.plate),
                     metadata = metadata,
+                    disabled = v.state ~= 'in_impound',
                     arrow = true,
                     onSelect = function()
                         local options = {}
@@ -631,7 +640,7 @@ end)
 RegisterNetEvent('midofey_garage:recoverVehicle', function(args)
     lib.callback('midofey_garage:getVehicle', false, function(vehicle)
         if vehicle then
-            if vehicle.impound then
+            if vehicle.state == 'in_impound' then
                 lib.callback('midofey_garage:canPay', false, function(canPay)
                     if canPay then
                         local vehicleData = json.decode(vehicle.vehicle)
