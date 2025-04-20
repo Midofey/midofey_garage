@@ -2,6 +2,8 @@ lib.locale()
 
 Config = {}
 
+Config.NpwdIntegration = true
+
 Config.UseRadialMenu = false
 
 Config.AccessDistance = 3.0

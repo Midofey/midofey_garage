@@ -225,7 +225,7 @@ end)
 RegisterNetEvent('midofey_garage:transferVehicle', function(args)
     lib.callback('midofey_garage:canPay', false, function(canPay)
         if canPay then
-            TriggerServerEvent('midofey_garage:setVehicleParking', args.plate, args.zone.parking)
+            TriggerServerEvent('midofey_garage:setVehicleParking', args.plate, args.zone.index)
             lib.notify({
                 description = locale('vehicle_moved'),
                 type = 'success'

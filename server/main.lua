@@ -217,3 +217,65 @@ if Config.ImpoundCommandEnabled then
         help = locale('command_impound')
     })    
 end
+
+if Config.NpwdIntegration then
+    RegisterNetEvent("npwd:midofey-garage:getVehicles", function()
+        local src = source
+        local xPlayer = ESX.GetPlayerFromId(src)
+        local identifier = xPlayer.getIdentifier()
+        local result = CustomSQL('query', 'SELECT * FROM owned_vehicles WHERE owner = ? ORDER BY `stored` DESC', {identifier})
+        for _, vehicle in ipairs(result) do
+            local props = json.decode(vehicle.vehicle)
+            if vehicle.stored == 1 or vehicle.stored == true then
+                vehicle.state = 'garaged'
+            elseif activeVehicles[vehicle.plate] then
+                local entity = activeVehicles[vehicle.plate]
+                if not DoesEntityExist(entity) then
+                    activeVehicles[vehicle.plate] = nil
+                    vehicle.state = 'impounded'
+                elseif GetVehiclePetrolTankHealth(entity) <= 0 or GetVehicleBodyHealth(entity) <= 0 then
+                    DeleteEntity(entity)
+                    activeVehicles[vehicle.plate] = nil
+                    vehicle.state = 'impounded'
+                else
+                    vehicle.state = 'out'
+                end
+            else
+                vehicle.state = 'impounded'
+            end
+            vehicle.hash = props.model
+            vehicle.fuel = props.fuelLevel
+            vehicle.body = props.bodyHealth
+            vehicle.engine = props.engineHealth
+            vehicle.vehicle = "Unknown"
+            vehicle.brand = "Unknown"
+            vehicle.props = props
+            if vehicle.parking ~= nil then
+                vehicle.garage = locale(vehicle.parking)
+            elseif vehicle.state == 'impounded' then
+                vehicle.garage = "Parking Servis"
+            end
+        end
+        TriggerClientEvent('npwd:midofey-garage:sendVehicles', src, result)
+    end)
+    lib.callback.register("midofey_garage:valetVehicle", function(source, plate, vehicleData, coords, heading)
+        local src = source
+        local vehicleId = nil
+        ESX.OneSync.SpawnVehicle(vehicleData.hash, coords, heading, vehicleData.props, function(NetworkId)
+            Wait(500)
+            local Vehicle = NetworkGetEntityFromNetworkId(NetworkId)
+            -- NetworkId is sent over, since then it can also be sent to a client for them to use, vehicle handles cannot.
+            local Exists = DoesEntityExist(Vehicle)
+            vehicleId = NetworkId
+            activeVehicles[plate] = Vehicle
+            print(Exists and 'Successfully Spawned Vehicle!' or 'Failed to Spawn Vehicle!')
+            local xPlayer = ESX.GetPlayerFromId(src)
+            local identifier = xPlayer.getIdentifier()
+            CustomSQL('update',
+                "UPDATE owned_vehicles SET `stored` = 0, parking = NULL WHERE REPLACE(plate, ' ','') = ? and owner = ?",
+                {plate, identifier})
+        end)
+        while vehicleId == nil do Wait(100) end
+        return vehicleId
+    end)
+end
