@@ -160,7 +160,7 @@ end)
 RegisterServerEvent('midofey_garage:setVehicleImpound', function(plate)
     local xPlayer = ESX.GetPlayerFromId(source)
     local identifier = xPlayer.getIdentifier()
-    CustomSQL('update', 'UPDATE owned_vehicles SET state = "in_impound" WHERE plate = ? and owner = ?',
+    CustomSQL('update', 'UPDATE owned_vehicles SET `stored` = 0 WHERE plate = ? and owner = ?',
         {plate, identifier})
     if activeVehicles[plate] ~= nil then
         activeVehicles[plate] = nil

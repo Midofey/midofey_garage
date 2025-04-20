@@ -81,34 +81,41 @@ function inside(self)
     end
 end
 
-function spawnVehicle(vehicleData, plate, coords)
-    if not lib.getClosestVehicle(vector3(coords), 5.0, false) then
-        local vehicleId = lib.callback.await('midofey_garage:spawnVehicle', false, vehicleData, plate, coords)
-        local veh = NetworkGetEntityFromNetworkId(vehicleId)
-        SetPedIntoVehicle(PlayerPedId(), veh, -1)
-        lib.setVehicleProperties(veh, vehicleData)
-        lib.notify({
-            description = locale('vehicle_out'),
-            type = 'success'
-        })
-        if Config.FuelSystem == 'LegacyFuel' then
-            if vehicleData.fuelLevel then
-                exports["LegacyFuel"]:SetFuel(veh, vehicleData.fuelLevel)
-            end
-        elseif Config.FuelSystem == 'ox_fuel' then
-            Entity(veh).state.fuel = vehicleData.fuelLevel
-        elseif Config.FuelSystem == 'custom' then
-                -- add your custom system export here
+function spawnVehicle(vehicleData, plate, spawnPoints)
+    local coords = nil
+    for _, spawnPoint in ipairs(spawnPoints) do
+        if ESX.Game.IsSpawnPointClear(spawnPoint, 3.0) then
+            coords = spawnPoint
+            break
         end
-        if Config.KeySystem == 'custom' then
-            Entity(veh).state.owner = GetPlayerServerId(PlayerId())
-            -- add your custom system export here
-        end
-    else
+    end
+    if coords == nil then
         lib.notify({
             description = locale('vehicles_in_zone'),
             type = 'error'
         })
+        return
+    end
+    local vehicleId = lib.callback.await('midofey_garage:spawnVehicle', false, vehicleData, plate, coords)
+    local veh = NetworkGetEntityFromNetworkId(vehicleId)
+    SetPedIntoVehicle(PlayerPedId(), veh, -1)
+    lib.setVehicleProperties(veh, vehicleData)
+    lib.notify({
+        description = locale('vehicle_out'),
+        type = 'success'
+    })
+    if Config.FuelSystem == 'LegacyFuel' then
+        if vehicleData.fuelLevel then
+            exports["LegacyFuel"]:SetFuel(veh, vehicleData.fuelLevel)
+        end
+    elseif Config.FuelSystem == 'ox_fuel' then
+        Entity(veh).state.fuel = vehicleData.fuelLevel
+    elseif Config.FuelSystem == 'custom' then
+        -- add your custom system export here
+    end
+    if Config.KeySystem == 'custom' then
+        Entity(veh).state.owner = GetPlayerServerId(PlayerId())
+        -- add your custom system export here
     end
 end
 
@@ -274,19 +281,29 @@ function EnterPreviewMode(vehicleData, spawn)
         DeleteVehicle(previewVehicle)
         previewVehicle = nil
     end
-    lib.callback('midofey_garage:setPlayerRoutingBucket', false, function(canContinue)
-        if canContinue then
-            ESX.Game.SpawnVehicle(vehicleData.model, vector3(spawn), spawn.w, function(veh)
-                previewVehicle = veh
-                lib.setVehicleProperties(veh, vehicleData)
-                FreezeEntityPosition(veh, true)
-                cam = CreateCamWithParams('DEFAULT_SCRIPTED_CAMERA',
-                    GetOffsetFromEntityInWorldCoords(previewVehicle, -3.0, 3.0, 0.5), 0.0, 0.0, GetEntityHeading(veh) - 130.0,
-                    60.0)
-                SetCamActive(cam, true)
-                RenderScriptCams(true, true, 1000, true, false)
-            end)
+    local coords = nil
+    for _, spawnPoint in ipairs(spawn) do
+        if ESX.Game.IsSpawnPointClear(spawnPoint, 3.0) then
+            coords = spawnPoint
+            break
         end
+    end
+    if coords == nil then
+        lib.notify({
+            description = locale('vehicles_in_zone'),
+            type = 'error'
+        })
+        return
+    end
+    ESX.Game.SpawnLocalVehicle(vehicleData.model, vector3(coords), coords.w, function(veh)
+        previewVehicle = veh
+        lib.setVehicleProperties(veh, vehicleData)
+        FreezeEntityPosition(veh, true)
+        cam = CreateCamWithParams('DEFAULT_SCRIPTED_CAMERA',
+            GetOffsetFromEntityInWorldCoords(previewVehicle, -3.0, 3.0, 0.5), 0.0, 0.0, GetEntityHeading(veh) - 130.0,
+            60.0)
+        SetCamActive(cam, true)
+        RenderScriptCams(true, true, 1000, true, false)
     end)
 end
 
@@ -294,14 +311,10 @@ function ExitPreviewMode()
     if inPreviewMode then
         inPreviewMode = false
         RenderScriptCams(false, true, 1000, true, true)
-        lib.callback('midofey_garage:setPlayerRoutingBucket', false, function(canContinue)
-            if canContinue then
-                if previewVehicle then
-                    DeleteVehicle(previewVehicle)
-                    previewVehicle = nil
-                end
-            end
-        end, 0)
+        if previewVehicle then
+            DeleteVehicle(previewVehicle)
+            previewVehicle = nil
+        end
     end
 end
 
