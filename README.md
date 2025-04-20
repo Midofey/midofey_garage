@@ -8,8 +8,8 @@ Join my Discord: https://discord.gg/6eVpwuJYmt
 
 https://forum.cfx.re/t/free-release-esx-vrs-garage-simple-garage-fivem/5094760
 
-![banner](https://cdn.discordapp.com/attachments/1068013967798181949/1105331650998566942/vrs_garage_banner.png)
-# VRS_GARAGE
+![banner](https://cdn.discordapp.com/attachments/1068013967798181949/1105331650998566942/midofey_garage_banner.png)
+# midofey_garage
 
 Optimized garage system
 

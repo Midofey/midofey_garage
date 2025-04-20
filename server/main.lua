@@ -1,8 +1,8 @@
 ESX = exports['es_extended']:getSharedObject()
 lib.locale()
-lib.versionCheck('gabovrs/vrs_garage')
+lib.versionCheck('gabovrs/midofey_garage')
 
-lib.callback.register('vrs_garage:checkOwner', function(source, plate)
+lib.callback.register('midofey_garage:checkOwner', function(source, plate)
     local plate = string.gsub(plate, ' ', '')
     local result = CustomSQL('query', 'SELECT owner FROM owned_vehicles WHERE REPLACE(plate, " ", "") = ?', {plate})
     if #result > 0 then
@@ -10,7 +10,7 @@ lib.callback.register('vrs_garage:checkOwner', function(source, plate)
     end
 end)
 
-lib.callback.register('vrs_garage:getVehicles', function(source, job, type)
+lib.callback.register('midofey_garage:getVehicles', function(source, job, type)
     local xPlayer = ESX.GetPlayerFromId(source)
     local identifier = xPlayer.getIdentifier()
     local result
@@ -23,14 +23,14 @@ lib.callback.register('vrs_garage:getVehicles', function(source, job, type)
     return result
 end)
 
-lib.callback.register('vrs_garage:getImpoundedVehicles', function(source, type)
+lib.callback.register('midofey_garage:getImpoundedVehicles', function(source, type)
     local xPlayer = ESX.GetPlayerFromId(source)
     local identifier = xPlayer.getIdentifier()
     local result = CustomSQL('query', 'SELECT * FROM owned_vehicles WHERE owner = ? and impound = 1 and type = ?', {identifier, type})
     return result
 end)
 
-lib.callback.register('vrs_garage:canPay', function(source, amount)
+lib.callback.register('midofey_garage:canPay', function(source, amount)
     local xPlayer = ESX.GetPlayerFromId(source)
     local PlayerMoney = xPlayer.getMoney() -- Get the Current Player`s Balance.
     if PlayerMoney >= amount then -- check if the Player`s Money is more or equal to the cost.
@@ -41,7 +41,7 @@ lib.callback.register('vrs_garage:canPay', function(source, amount)
     end
 end)
 
-lib.callback.register('vrs_garage:getVehicle', function(source, plate)
+lib.callback.register('midofey_garage:getVehicle', function(source, plate)
     local plate = string.gsub(plate, ' ', '')
     local xPlayer = ESX.GetPlayerFromId(source)
     local identifier = xPlayer.getIdentifier()
@@ -49,7 +49,7 @@ lib.callback.register('vrs_garage:getVehicle', function(source, plate)
     return result[1]
 end)
 
-RegisterServerEvent('vrs_garage:updateVehicle', function(plate, vehicle, parking, stored)
+RegisterServerEvent('midofey_garage:updateVehicle', function(plate, vehicle, parking, stored)
     local plate = string.gsub(plate, ' ', '')
     local xPlayer = ESX.GetPlayerFromId(source)
     local identifier = xPlayer.getIdentifier()
@@ -57,7 +57,7 @@ RegisterServerEvent('vrs_garage:updateVehicle', function(plate, vehicle, parking
         {vehicle, parking, stored, plate, identifier})
 end)
 
-RegisterServerEvent('vrs_garage:buyVehicle', function(plate, vehicle, parking, job)
+RegisterServerEvent('midofey_garage:buyVehicle', function(plate, vehicle, parking, job)
     local xPlayer = ESX.GetPlayerFromId(source)
     local identifier = xPlayer.getIdentifier()
     CustomSQL('insert',
@@ -65,7 +65,7 @@ RegisterServerEvent('vrs_garage:buyVehicle', function(plate, vehicle, parking, j
         {identifier, plate, json.encode(vehicle), 'car', 1, parking, 0, job})
 end)
 
-RegisterServerEvent('vrs_garage:setVehicleOut', function(plate, stored)
+RegisterServerEvent('midofey_garage:setVehicleOut', function(plate, stored)
     local plate = string.gsub(plate, ' ', '')
     local xPlayer = ESX.GetPlayerFromId(source)
     local identifier = xPlayer.getIdentifier()
@@ -74,21 +74,21 @@ RegisterServerEvent('vrs_garage:setVehicleOut', function(plate, stored)
         {stored, plate, identifier})
 end)
 
-RegisterServerEvent('vrs_garage:setVehicleParking', function(plate, parking)
+RegisterServerEvent('midofey_garage:setVehicleParking', function(plate, parking)
     local xPlayer = ESX.GetPlayerFromId(source)
     local identifier = xPlayer.getIdentifier()
     CustomSQL('update', 'UPDATE owned_vehicles SET parking = ? WHERE plate = ? and owner = ?',
         {parking, plate, identifier})
 end)
 
-RegisterServerEvent('vrs_garage:setVehicleImpound', function(plate, impound)
+RegisterServerEvent('midofey_garage:setVehicleImpound', function(plate, impound)
     local xPlayer = ESX.GetPlayerFromId(source)
     local identifier = xPlayer.getIdentifier()
     CustomSQL('update', 'UPDATE owned_vehicles SET impound = ? WHERE plate = ? and owner = ?',
         {impound, plate, identifier})
 end)
 
-lib.callback.register('vrs_garage:setPlayerRoutingBucket', function(source, bucket)
+lib.callback.register('midofey_garage:setPlayerRoutingBucket', function(source, bucket)
     if not bucket then
         bucket = math.random(1000)
     end
@@ -131,7 +131,7 @@ if Config.ImpoundCommandEnabled then
     ESX.RegisterCommand(Config.ImpoundCommand.command, 'user', function(xPlayer, args, showError)
         for k, job in pairs(Config.ImpoundCommand.jobs) do
             if xPlayer.getJob().name == job then
-                xPlayer.triggerEvent('vrs_garage:impoundVehicle')
+                xPlayer.triggerEvent('midofey_garage:impoundVehicle')
             end
         end
     end, false, {

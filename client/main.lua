@@ -28,7 +28,7 @@ function onEnter(self)
                     label = locale('radial-access-'.. self.name),
                     icon = self.icon,
                     onSelect = function()
-                        TriggerEvent('vrs_garage:access-' .. self.name, self)
+                        TriggerEvent('midofey_garage:access-' .. self.name, self)
                     end
                 }})
             else
@@ -44,7 +44,7 @@ function onEnter(self)
                 label = locale('radial-access-'.. self.name),
                 icon = self.icon,
                 onSelect = function()
-                    TriggerEvent('vrs_garage:access-' .. self.name, self)
+                    TriggerEvent('midofey_garage:access-' .. self.name, self)
                 end
             }})
         else
@@ -71,10 +71,10 @@ function inside(self)
         isBusy = true
         if self.job then
             if ESX.PlayerData.job.name == self.job then
-                TriggerEvent('vrs_garage:access-' .. self.name, self)
+                TriggerEvent('midofey_garage:access-' .. self.name, self)
             end
         else
-            TriggerEvent('vrs_garage:access-' .. self.name, self)
+            TriggerEvent('midofey_garage:access-' .. self.name, self)
         end
         Citizen.Wait(1000)
         isBusy = false
@@ -90,7 +90,7 @@ function spawnVehicle(vehicleData, plate, coords)
                 description = locale('vehicle_out'),
                 type = 'success'
             })
-            TriggerServerEvent('vrs_garage:setVehicleOut', plate, false)
+            TriggerServerEvent('midofey_garage:setVehicleOut', plate, false)
             if Config.FuelSystem == 'LegacyFuel' then
                 if vehicleData.fuelLevel then
                     exports["LegacyFuel"]:SetFuel(veh, vehicleData.fuelLevel)
@@ -113,7 +113,7 @@ function spawnVehicle(vehicleData, plate, coords)
     end
 end
 
-RegisterNetEvent('vrs_garage:impoundVehicle', function()
+RegisterNetEvent('midofey_garage:impoundVehicle', function()
     local ped = PlayerPedId()
     local closestVehicle = lib.getClosestVehicle(GetEntityCoords(ped), Config.ImpoundCommand.radius, false)
     if closestVehicle then
@@ -133,7 +133,7 @@ RegisterNetEvent('vrs_garage:impoundVehicle', function()
                     clip = 'fixing_a_ped'
                 }
             }) then
-                TriggerServerEvent('vrs_garage:setVehicleImpound', string.gsub(GetVehicleNumberPlateText(closestVehicle), "%s", ""), true)
+                TriggerServerEvent('midofey_garage:setVehicleImpound', string.gsub(GetVehicleNumberPlateText(closestVehicle), "%s", ""), true)
                 SetEntityAsMissionEntity(closestVehicle, true, true)
                 NetworkFadeOutEntity(closestVehicle, true, true)
                 Wait(1000)
@@ -152,11 +152,11 @@ RegisterNetEvent('vrs_garage:impoundVehicle', function()
     end
 end)
 
-RegisterNetEvent('vrs_garage:takeOutVehicle', function(args)
+RegisterNetEvent('midofey_garage:takeOutVehicle', function(args)
     DoScreenFadeOut(200)
     Wait(500)
     ExitPreviewMode()
-    lib.callback('vrs_garage:getVehicle', false, function(vehicle)
+    lib.callback('midofey_garage:getVehicle', false, function(vehicle)
         if vehicle then
             if vehicle.stored then
                 local vehicleData = json.decode(vehicle.vehicle)
@@ -175,8 +175,8 @@ RegisterNetEvent('vrs_garage:takeOutVehicle', function(args)
     end, args.plate)
 end)
 
-RegisterNetEvent('vrs_garage:sendVehicleImpound', function(targetPlate)
-    TriggerServerEvent('vrs_garage:setVehicleImpound', targetPlate, true)
+RegisterNetEvent('midofey_garage:sendVehicleImpound', function(targetPlate)
+    TriggerServerEvent('midofey_garage:setVehicleImpound', targetPlate, true)
     lib.notify({
         description = locale('vehicle_sent_to_impounded'),
         type = 'info'
@@ -194,7 +194,7 @@ RegisterNetEvent('vrs_garage:sendVehicleImpound', function(targetPlate)
     end
 end)
 
-RegisterNetEvent('vrs_garage:findVehicle', function(targetPlate)
+RegisterNetEvent('midofey_garage:findVehicle', function(targetPlate)
     local vehicles = ESX.Game.GetVehicles()
     local found = false
     for i = 1, #vehicles do
@@ -223,10 +223,10 @@ RegisterNetEvent('vrs_garage:findVehicle', function(targetPlate)
     end
 end)
 
-RegisterNetEvent('vrs_garage:transferVehicle', function(args)
-    lib.callback('vrs_garage:canPay', false, function(canPay)
+RegisterNetEvent('midofey_garage:transferVehicle', function(args)
+    lib.callback('midofey_garage:canPay', false, function(canPay)
         if canPay then
-            TriggerServerEvent('vrs_garage:setVehicleParking', args.plate, args.zone.parking)
+            TriggerServerEvent('midofey_garage:setVehicleParking', args.plate, args.zone.parking)
             lib.notify({
                 description = locale('vehicle_moved'),
                 type = 'success'
@@ -240,7 +240,7 @@ RegisterNetEvent('vrs_garage:transferVehicle', function(args)
     end, Config.TransferVehiclePrice[args.zone.type])
 end)
 
-RegisterNetEvent('vrs_garage:access-garage-job', function(zone)
+RegisterNetEvent('midofey_garage:access-garage-job', function(zone)
     local options = {}
 
     if Config.JobVehicleShopEnabled then
@@ -256,7 +256,7 @@ RegisterNetEvent('vrs_garage:access-garage-job', function(zone)
         icon = 'warehouse',
         arrow = true,
         onSelect = function()
-            TriggerEvent('vrs_garage:access-garage', zone)
+            TriggerEvent('midofey_garage:access-garage', zone)
         end
     })
 
@@ -275,7 +275,7 @@ function EnterPreviewMode(vehicleData, spawn)
         DeleteVehicle(previewVehicle)
         previewVehicle = nil
     end
-    lib.callback('vrs_garage:setPlayerRoutingBucket', false, function(canContinue)
+    lib.callback('midofey_garage:setPlayerRoutingBucket', false, function(canContinue)
         if canContinue then
             ESX.Game.SpawnVehicle(vehicleData.model, vector3(spawn), spawn.w, function(veh)
                 previewVehicle = veh
@@ -295,7 +295,7 @@ function ExitPreviewMode()
     if inPreviewMode then
         inPreviewMode = false
         RenderScriptCams(false, true, 1000, true, true)
-        lib.callback('vrs_garage:setPlayerRoutingBucket', false, function(canContinue)
+        lib.callback('midofey_garage:setPlayerRoutingBucket', false, function(canContinue)
             if canContinue then
                 if previewVehicle then
                     DeleteVehicle(previewVehicle)
@@ -336,8 +336,8 @@ function GetVehicleMetaData(vehicleData)
     return metadata
 end
 
-RegisterNetEvent('vrs_garage:access-garage', function(zone)
-    lib.callback('vrs_garage:getVehicles', false, function(vehicles)
+RegisterNetEvent('midofey_garage:access-garage', function(zone)
+    lib.callback('midofey_garage:getVehicles', false, function(vehicles)
         local options = {}
         if #vehicles > 0 then
             for k, v in pairs(vehicles) do
@@ -384,7 +384,7 @@ RegisterNetEvent('vrs_garage:access-garage', function(zone)
                                                 plate = v.plate,
                                                 zone = zone
                                             },
-                                            event = 'vrs_garage:transferVehicle'
+                                            event = 'midofey_garage:transferVehicle'
                                         })
                                     else
                                         EnterPreviewMode(vehicleData,
@@ -397,7 +397,7 @@ RegisterNetEvent('vrs_garage:access-garage', function(zone)
                                                 zone = zone,
                                                 spawn = Config.JobGarajes[zone.job].locations[zone.index].spawn
                                             },
-                                            event = 'vrs_garage:takeOutVehicle'
+                                            event = 'midofey_garage:takeOutVehicle'
                                         })
                                     end
                                 else
@@ -406,14 +406,14 @@ RegisterNetEvent('vrs_garage:access-garage', function(zone)
                                         title = locale('send_vehicle_to_impound'),
                                         icon = 'warehouse',
                                         args = v.plate,
-                                        event = 'vrs_garage:sendVehicleImpound'
+                                        event = 'midofey_garage:sendVehicleImpound'
                                     })
 
                                     table.insert(options, {
                                         title = locale('find_vehicle'),
                                         icon = 'location-dot',
                                         args = v.plate,
-                                        event = 'vrs_garage:findVehicle'
+                                        event = 'midofey_garage:findVehicle'
                                     })
                                 end
 
@@ -448,7 +448,7 @@ RegisterNetEvent('vrs_garage:access-garage', function(zone)
                                                     plate = v.plate,
                                                     zone = zone
                                                 },
-                                                event = 'vrs_garage:transferVehicle'
+                                                event = 'midofey_garage:transferVehicle'
                                             })
                                         else
                                             EnterPreviewMode(vehicleData, Config.Garages[zone.index].spawn)
@@ -460,7 +460,7 @@ RegisterNetEvent('vrs_garage:access-garage', function(zone)
                                                     zone = zone,
                                                     spawn = Config.Garages[zone.index].spawn
                                                 },
-                                                event = 'vrs_garage:takeOutVehicle'
+                                                event = 'midofey_garage:takeOutVehicle'
                                             })
                                         end
                                     else
@@ -469,14 +469,14 @@ RegisterNetEvent('vrs_garage:access-garage', function(zone)
                                             title = locale('send_vehicle_to_impound'),
                                             icon = 'warehouse',
                                             args = v.plate,
-                                            event = 'vrs_garage:sendVehicleImpound'
+                                            event = 'midofey_garage:sendVehicleImpound'
                                         })
 
                                         table.insert(options, {
                                             title = locale('find_vehicle'),
                                             icon = 'location-dot',
                                             args = v.plate,
-                                            event = 'vrs_garage:findVehicle'
+                                            event = 'midofey_garage:findVehicle'
                                         })
                                     end
                                     lib.registerContext({
@@ -513,20 +513,20 @@ RegisterNetEvent('vrs_garage:access-garage', function(zone)
     end, zone.job, zone.type)
 end)
 
-RegisterNetEvent('vrs_garage:access-store', function(zone)
+RegisterNetEvent('midofey_garage:access-store', function(zone)
     local ped = PlayerPedId()
     if IsPedInAnyVehicle(ped, false) then
         local currentVehicle = GetVehiclePedIsIn(ped, false)
         if GetPedInVehicleSeat(currentVehicle, -1) == ped then
             local plate = GetVehicleNumberPlateText(currentVehicle)
-            lib.callback('vrs_garage:checkOwner', false, function(isOwner)
+            lib.callback('midofey_garage:checkOwner', false, function(isOwner)
                 if isOwner then
-                    lib.callback('vrs_garage:getVehicle', false, function(vehicle)
+                    lib.callback('midofey_garage:getVehicle', false, function(vehicle)
                         if vehicle then
                             if zone.job then
                                 if zone.job == vehicle.job and zone.type == vehicle.type then
                                     local vehicleProperties = json.encode(lib.getVehicleProperties(currentVehicle))
-                                    TriggerServerEvent('vrs_garage:updateVehicle', plate, vehicleProperties, zone.index, true)
+                                    TriggerServerEvent('midofey_garage:updateVehicle', plate, vehicleProperties, zone.index, true)
                                     lib.notify({
                                         description = locale('vehicle_stored'),
                                         type = 'success'
@@ -542,7 +542,7 @@ RegisterNetEvent('vrs_garage:access-store', function(zone)
                             else
                                 if not vehicle.job and zone.type == vehicle.type then
                                     local vehicleProperties = json.encode(lib.getVehicleProperties(currentVehicle))
-                                    TriggerServerEvent('vrs_garage:updateVehicle', plate, vehicleProperties, zone.index, true)
+                                    TriggerServerEvent('midofey_garage:updateVehicle', plate, vehicleProperties, zone.index, true)
                                     lib.notify({
                                         description = locale('vehicle_stored'),
                                         type = 'success'
@@ -573,8 +573,8 @@ RegisterNetEvent('vrs_garage:access-store', function(zone)
     end
 end)
 
-RegisterNetEvent('vrs_garage:access-impound', function(zone)
-    lib.callback('vrs_garage:getImpoundedVehicles', false, function(vehicles)
+RegisterNetEvent('midofey_garage:access-impound', function(zone)
+    lib.callback('midofey_garage:getImpoundedVehicles', false, function(vehicles)
         local options = {}
         if vehicles and #vehicles > 0 then
             for k, v in pairs(vehicles) do
@@ -600,7 +600,7 @@ RegisterNetEvent('vrs_garage:access-impound', function(zone)
                                 plate = v.plate,
                                 zone = zone
                             },
-                            event = 'vrs_garage:recoverVehicle'
+                            event = 'midofey_garage:recoverVehicle'
                         })
                         lib.registerContext({
                             id = 'garage_vehicle_options',
@@ -629,15 +629,15 @@ RegisterNetEvent('vrs_garage:access-impound', function(zone)
     end, zone.type)
 end)
 
-RegisterNetEvent('vrs_garage:recoverVehicle', function(args)
-    lib.callback('vrs_garage:getVehicle', false, function(vehicle)
+RegisterNetEvent('midofey_garage:recoverVehicle', function(args)
+    lib.callback('midofey_garage:getVehicle', false, function(vehicle)
         if vehicle then
             if vehicle.impound then
-                lib.callback('vrs_garage:canPay', false, function(canPay)
+                lib.callback('midofey_garage:canPay', false, function(canPay)
                     if canPay then
                         local vehicleData = json.decode(vehicle.vehicle)
                         spawnVehicle(vehicleData, vehicle.plate, Config.Impounds[args.zone.index].spawn)
-                        TriggerServerEvent('vrs_garage:setVehicleOut', vehicle.plate, false)
+                        TriggerServerEvent('midofey_garage:setVehicleOut', vehicle.plate, false)
                     else
                         lib.notify({
                             description = locale('not_enought_money'),
@@ -655,11 +655,11 @@ RegisterNetEvent('vrs_garage:recoverVehicle', function(args)
     end, args.plate)
 end)
 
-RegisterNetEvent('vrs_garage:buyVehicle', function(args)
-    lib.callback('vrs_garage:canPay', false, function(canPay)
+RegisterNetEvent('midofey_garage:buyVehicle', function(args)
+    lib.callback('midofey_garage:canPay', false, function(canPay)
         if canPay then
             local vehicle = lib.getVehicleProperties(previewVehicle)
-            TriggerServerEvent('vrs_garage:buyVehicle', vehicle.plate, vehicle, zoneIndex, args.job)
+            TriggerServerEvent('midofey_garage:buyVehicle', vehicle.plate, vehicle, zoneIndex, args.job)
             ExitPreviewMode()
             lib.notify({
                 description = locale('vehicle_purchased'),
@@ -863,7 +863,7 @@ for job, vehicles in pairs(Config.JobVehicles) do
                             price = info.price,
                             job = job
                         },
-                        event = 'vrs_garage:buyVehicle'
+                        event = 'midofey_garage:buyVehicle'
                     }}
                 })
 
